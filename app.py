@@ -16,9 +16,12 @@ def index():
     """Serve the main UI page"""
     return render_template('index.html')
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['GET', 'POST'])
 def webhook_receiver():
     """GitHub webhook endpoint"""
+    if request.method == 'GET':
+        return "Webhook endpoint is working!"
+    
     try:
         # Get the GitHub event type
         event_type = request.headers.get('X-GitHub-Event', '')
@@ -152,9 +155,12 @@ def get_actions():
         print(f"Error fetching actions: {e}")
         return jsonify({'error': 'Failed to fetch actions'}), 500
 
-@app.route('/test-webhook', methods=['POST'])
+@app.route('/test-webhook', methods=['GET', 'POST'])
 def test_webhook():
     """Test endpoint for manual testing"""
+    if request.method == 'GET':
+        return "Test webhook endpoint is working!"
+    
     try:
         test_data = {
             'id': 'test_123',
