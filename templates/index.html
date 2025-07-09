@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Webhook Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GitHub Repository Activity Monitor</h1>
+            <p>Real-time monitoring of GitHub repository actions</p>
+        </header>
+        
+        <div class="status-bar">
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-dot"></span>
+                <span id="status-text">Connecting...</span>
+            </div>
+            <div class="last-updated">
+                Last updated: <span id="last-updated">Never</span>
+            </div>
+        </div>
+        
+        <div class="actions-container">
+            <div class="actions-header">
+                <h2>Recent Activities</h2>
+                <button id="refresh-btn" class="refresh-btn">Refresh</button>
+            </div>
+            
+            <div id="actions-list" class="actions-list">
+                <div class="loading">Loading activities...</div>
+            </div>
+        </div>
+        
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <h3>No activities yet</h3>
+            <p>Push, create pull requests, or merge branches to see activities here.</p>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
