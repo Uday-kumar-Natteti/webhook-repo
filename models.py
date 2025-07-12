@@ -49,7 +49,7 @@ def format_action_message(action: Dict) -> str:
         except:
             timestamp = datetime.now()
     
-    formatted_time = timestamp.strftime("%d %B %Y - %I:%M %p UTC")
+    formatted_time = timestamp.strftime("%d %B %Y - %I:%M %p")
     
     if action_type == 'PUSH':
         to_branch = action.get('to_branch', 'unknown')
