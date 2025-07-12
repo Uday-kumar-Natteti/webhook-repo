@@ -45,7 +45,7 @@ def format_action_message(action: Dict) -> str:
     # Format timestamp
     if isinstance(timestamp, str):
         try:
-            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+05:30'))
         except:
             timestamp = datetime.now()
     
