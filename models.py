@@ -64,25 +64,25 @@ def format_action_message(action: Dict) -> str:
             if file_changes.get('added'):
                 added_files = file_changes['added']
                 if len(added_files) <= 3:
-                    changes_parts.append(f"📄 Added: {', '.join(added_files)}")
+                    changes_parts.append(f"Added: {', '.join(added_files)}")
                 else:
-                    changes_parts.append(f"📄 Added: {', '.join(added_files[:3])} (+{len(added_files) - 3} more)")
+                    changes_parts.append(f"Added: {', '.join(added_files[:3])} (+{len(added_files) - 3} more)")
             
             # Modified files  
             if file_changes.get('modified'):
                 modified_files = file_changes['modified']
                 if len(modified_files) <= 3:
-                    changes_parts.append(f"✏️ Modified: {', '.join(modified_files)}")
+                    changes_parts.append(f"✏Modified: {', '.join(modified_files)}")
                 else:
-                    changes_parts.append(f"✏️ Modified: {', '.join(modified_files[:3])} (+{len(modified_files) - 3} more)")
+                    changes_parts.append(f"✏Modified: {', '.join(modified_files[:3])} (+{len(modified_files) - 3} more)")
             
             # Removed files
             if file_changes.get('removed'):
                 removed_files = file_changes['removed']
                 if len(removed_files) <= 3:
-                    changes_parts.append(f"🗑️ Removed: {', '.join(removed_files)}")
+                    changes_parts.append(f"🗑Removed: {', '.join(removed_files)}")
                 else:
-                    changes_parts.append(f"🗑️ Removed: {', '.join(removed_files[:3])} (+{len(removed_files) - 3} more)")
+                    changes_parts.append(f"🗑Removed: {', '.join(removed_files[:3])} (+{len(removed_files) - 3} more)")
             
             if changes_parts:
                 base_message += f"\n{' | '.join(changes_parts)}"
@@ -97,7 +97,7 @@ def format_action_message(action: Dict) -> str:
         # Add commit message if available
         commit_message = action.get('message', '')
         if commit_message:
-            base_message += f"\n💬 {commit_message}"
+            base_message += f"\n {commit_message}"
         
         return f"{base_message}\n{formatted_time}"
     
@@ -109,7 +109,7 @@ def format_action_message(action: Dict) -> str:
         # Add commit message if available
         commit_message = action.get('message', '')
         if commit_message:
-            base_message += f"\n💬 {commit_message}"
+            base_message += f"\n {commit_message}"
         
         return f"{base_message}\n{formatted_time}"
     
