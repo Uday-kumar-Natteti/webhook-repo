@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from datetime import datetime
 import os
+import pytz
 from typing import Dict, List, Optional
 
 class MongoDBHandler:
@@ -42,13 +43,20 @@ def format_action_message(action: Dict) -> str:
     author = action.get('author', 'Unknown')
     timestamp = action.get('timestamp', datetime.now())
     
-    # Format timestamp
     if isinstance(timestamp, str):
         try:
-            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+05:30'))
+            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
         except:
             timestamp = datetime.now()
-    
+
+    # Convert UTC to IST
+    utc = pytz.utc
+    ist = pytz.timezone('Asia/Kolkata')
+    if timestamp.tzinfo is None:
+        timestamp = utc.localize(timestamp)
+    timestamp = timestamp.astimezone(ist)
+
+    # Format time in IST
     formatted_time = timestamp.strftime("%d %B %Y - %I:%M %p")
     
     if action_type == 'PUSH':
