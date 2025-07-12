@@ -55,7 +55,7 @@ def webhook_receiver():
         return jsonify({'error': 'Internal server error'}), 500
 
 def process_push_event(payload):
-    """Process push event payload"""
+    """Process push event payload with detailed file information"""
     try:
         commits = payload.get('commits', [])
         if not commits:
@@ -69,6 +69,19 @@ def process_push_event(payload):
         ref = payload.get('ref', '')
         to_branch = ref.split('/')[-1] if '/' in ref else 'unknown'
         
+        # Extract file changes from the commit
+        added_files = latest_commit.get('added', [])
+        modified_files = latest_commit.get('modified', [])
+        removed_files = latest_commit.get('removed', [])
+        
+        # Create file changes summary
+        file_changes = {
+            'added': added_files,
+            'modified': modified_files,
+            'removed': removed_files,
+            'total_changes': len(added_files) + len(modified_files) + len(removed_files)
+        }
+        
         return {
             'id': latest_commit.get('id', ''),
             'message': latest_commit.get('message', ''),
@@ -76,7 +89,10 @@ def process_push_event(payload):
             'author': author,
             'to_branch': to_branch,
             'from_branch': None,
-            'request_type': 'push'
+            'request_type': 'push',
+            'file_changes': file_changes,  # This is the key addition
+            'commit_url': latest_commit.get('url', ''),
+            'files_changed': file_changes['total_changes']
         }
     except Exception as e:
         print(f"Error processing push event: {e}")
