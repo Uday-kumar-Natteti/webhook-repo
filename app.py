@@ -85,7 +85,7 @@ def process_push_event(payload):
         return {
             'id': latest_commit.get('id', ''),
             'message': latest_commit.get('message', ''),
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': author,
             'to_branch': to_branch,
             'from_branch': None,
@@ -115,7 +115,7 @@ def process_pull_request_event(payload):
         return {
             'id': str(pr.get('id', '')),
             'message': pr.get('title', ''),
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': author,
             'to_branch': to_branch,
             'from_branch': from_branch,
@@ -141,7 +141,7 @@ def process_merge_event(payload):
         return {
             'id': str(pr.get('id', '')),
             'message': pr.get('title', ''),
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': author,
             'to_branch': to_branch,
             'from_branch': from_branch,
@@ -181,7 +181,7 @@ def test_webhook():
         test_data = {
             'id': 'test_123',
             'message': 'Test commit message',
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': 'Test User',
             'to_branch': 'main',
             'from_branch': None,
