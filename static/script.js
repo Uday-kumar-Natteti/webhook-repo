@@ -35,7 +35,6 @@ class WebhookMonitor {
     async fetchActions() {
         try {
             const response = await fetch('/api/actions');
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -43,7 +42,6 @@ class WebhookMonitor {
             const actions = await response.json();
             this.updateUI(actions);
             this.updateStatus(true);
-
         } catch (error) {
             console.error('Error fetching actions:', error);
             this.updateStatus(false);
@@ -97,14 +95,9 @@ class WebhookMonitor {
     }
 
     formatTimeAgo(timestamp) {
-        const utcDate = new Date(timestamp);
-
-        // Convert UTC timestamp to IST by formatting and re-parsing
-        const istString = utcDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-        const istDate = new Date(istString);
-
         const now = new Date();
-        const diffInSeconds = Math.floor((now - istDate) / 1000);
+        const actionTime = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - actionTime) / 1000);
 
         if (diffInSeconds < 60) {
             return 'Just now';
@@ -131,7 +124,7 @@ class WebhookMonitor {
             statusDot.classList.remove('disconnected');
             statusText.textContent = 'Connected';
             this.lastUpdated = new Date();
-            lastUpdated.textContent = this.lastUpdated.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+            lastUpdated.textContent = this.lastUpdated.toLocaleTimeString();
         } else {
             statusDot.classList.add('disconnected');
             statusText.textContent = 'Disconnected';
@@ -139,7 +132,6 @@ class WebhookMonitor {
     }
 }
 
-// Initialize the monitor when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     new WebhookMonitor();
 });
