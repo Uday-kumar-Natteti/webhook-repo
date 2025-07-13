@@ -95,9 +95,10 @@ class WebhookMonitor {
     }
 
     formatTimeAgo(timestamp) {
+        const actionTime = new Date(timestamp); // This now includes correct timezone offset from backend (e.g. +05:30)
         const now = new Date();
-        const actionTime = new Date(timestamp);
-        const diffInSeconds = Math.floor((now - actionTime) / 1000);
+
+        const diffInSeconds = Math.floor((now.getTime() - actionTime.getTime()) / 1000); // both in ms
 
         if (diffInSeconds < 60) {
             return 'Just now';
