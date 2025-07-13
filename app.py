@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from models import MongoDBHandler, format_action_message
 from datetime import datetime
 import json
-import pytz
 import os
 from flask_cors import CORS
 
@@ -24,14 +23,12 @@ def webhook_receiver():
         return "Webhook endpoint is working!"
     
     try:
-        # Get the GitHub event type
         event_type = request.headers.get('X-GitHub-Event', '')
         payload = request.get_json()
         
         if not payload:
             return jsonify({'error': 'No payload received'}), 400
         
-        # Process different event types
         action_data = None
         
         if event_type == 'push':
@@ -42,7 +39,6 @@ def webhook_receiver():
             action_data = process_merge_event(payload)
         
         if action_data:
-            # Insert into MongoDB
             success = db_handler.insert_action(action_data)
             if success:
                 return jsonify({'status': 'success', 'message': 'Webhook processed successfully'}), 200
@@ -62,20 +58,16 @@ def process_push_event(payload):
         if not commits:
             return None
             
-        # Get the latest commit
         latest_commit = commits[-1]
         author = latest_commit.get('author', {}).get('name', 'Unknown')
         
-        # Extract branch from ref (refs/heads/branch_name)
         ref = payload.get('ref', '')
         to_branch = ref.split('/')[-1] if '/' in ref else 'unknown'
         
-        # Extract file changes from the commit
         added_files = latest_commit.get('added', [])
         modified_files = latest_commit.get('modified', [])
         removed_files = latest_commit.get('removed', [])
         
-        # Create file changes summary
         file_changes = {
             'added': added_files,
             'modified': modified_files,
@@ -86,12 +78,12 @@ def process_push_event(payload):
         return {
             'id': latest_commit.get('id', ''),
             'message': latest_commit.get('message', ''),
-            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
+            'timestamp': datetime.utcnow(),
             'author': author,
             'to_branch': to_branch,
             'from_branch': None,
             'request_type': 'push',
-            'file_changes': file_changes,  # This is the key addition
+            'file_changes': file_changes,
             'commit_url': latest_commit.get('url', ''),
             'files_changed': file_changes['total_changes']
         }
@@ -105,7 +97,6 @@ def process_pull_request_event(payload):
         pr = payload.get('pull_request', {})
         action = payload.get('action', '')
         
-        # Only process 'opened' action for pull requests
         if action != 'opened':
             return None
             
@@ -116,7 +107,7 @@ def process_pull_request_event(payload):
         return {
             'id': str(pr.get('id', '')),
             'message': pr.get('title', ''),
-            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
+            'timestamp': datetime.utcnow(),
             'author': author,
             'to_branch': to_branch,
             'from_branch': from_branch,
@@ -131,7 +122,6 @@ def process_merge_event(payload):
     try:
         pr = payload.get('pull_request', {})
         
-        # Check if PR was actually merged
         if not pr.get('merged', False):
             return None
             
@@ -142,7 +132,7 @@ def process_merge_event(payload):
         return {
             'id': str(pr.get('id', '')),
             'message': pr.get('title', ''),
-            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
+            'timestamp': datetime.utcnow(),
             'author': author,
             'to_branch': to_branch,
             'from_branch': from_branch,
@@ -182,7 +172,7 @@ def test_webhook():
         test_data = {
             'id': 'test_123',
             'message': 'Test commit message',
-            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
+            'timestamp': datetime.utcnow(),
             'author': 'Test User',
             'to_branch': 'main',
             'from_branch': None,
