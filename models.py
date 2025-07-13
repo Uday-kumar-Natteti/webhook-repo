@@ -1,8 +1,7 @@
 from pymongo import MongoClient
 from datetime import datetime
 import os
-import pytz
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 class MongoDBHandler:
     def __init__(self):
@@ -25,7 +24,6 @@ class MongoDBHandler:
         """Get recent actions sorted by timestamp"""
         try:
             actions = list(self.collection.find({}).sort("timestamp", -1).limit(limit))
-            # Convert ObjectId to string for JSON serialization
             for action in actions:
                 action['_id'] = str(action['_id'])
             return actions
@@ -41,85 +39,72 @@ def format_action_message(action: Dict) -> str:
     """Format action data into display message with file details"""
     action_type = action.get('request_type', '').upper()
     author = action.get('author', 'Unknown')
-    timestamp = action.get('timestamp', datetime.now())
-    
+    timestamp = action.get('timestamp', datetime.utcnow())
+
     if isinstance(timestamp, str):
         try:
             timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
         except:
-            timestamp = datetime.now()
+            timestamp = datetime.utcnow()
 
-    # Convert UTC to IST
-    utc = pytz.utc
-    ist = pytz.timezone('Asia/Kolkata')
-    if timestamp.tzinfo is None:
-        timestamp = utc.localize(timestamp)
-    timestamp = timestamp.astimezone(ist)
+    # Format time (no timezone conversion)
+    formatted_time = timestamp.strftime("%d %B %Y - %I:%M %p UTC")
 
-    # Format time in IST
-    formatted_time = timestamp.strftime("%d %B %Y - %I:%M %p")
-    
     if action_type == 'PUSH':
         to_branch = action.get('to_branch', 'unknown')
         base_message = f'"{author}" pushed to "{to_branch}"'
-        
-        # Add file changes if available
+
         file_changes = action.get('file_changes', {})
         if file_changes and file_changes.get('total_changes', 0) > 0:
             changes_parts = []
-            
-            # Added files
+
             if file_changes.get('added'):
                 added_files = file_changes['added']
                 if len(added_files) <= 3:
                     changes_parts.append(f"Added: {', '.join(added_files)}")
                 else:
                     changes_parts.append(f"Added: {', '.join(added_files[:3])} (+{len(added_files) - 3} more)")
-            
-            # Modified files  
+
             if file_changes.get('modified'):
                 modified_files = file_changes['modified']
                 if len(modified_files) <= 3:
                     changes_parts.append(f"Modified: {', '.join(modified_files)}")
                 else:
                     changes_parts.append(f"Modified: {', '.join(modified_files[:3])} (+{len(modified_files) - 3} more)")
-            
-            # Removed files
+
             if file_changes.get('removed'):
                 removed_files = file_changes['removed']
                 if len(removed_files) <= 3:
                     changes_parts.append(f"Removed: {', '.join(removed_files)}")
                 else:
                     changes_parts.append(f"Removed: {', '.join(removed_files[:3])} (+{len(removed_files) - 3} more)")
-            
+
             if changes_parts:
                 base_message += f"\n{' | '.join(changes_parts)}"
-        
+
         return f"{base_message}\n{formatted_time}"
-    
+
     elif action_type == 'PULL_REQUEST':
         from_branch = action.get('from_branch', 'unknown')
         to_branch = action.get('to_branch', 'unknown')
         base_message = f'"{author}" submitted a pull request from "{from_branch}" to "{to_branch}"'
-        
-        # Add commit message if available
+
         commit_message = action.get('message', '')
         if commit_message:
             base_message += f"\n {commit_message}"
-        
+
         return f"{base_message}\n{formatted_time}"
-    
+
     elif action_type == 'MERGE':
         from_branch = action.get('from_branch', 'unknown')
         to_branch = action.get('to_branch', 'unknown')
         base_message = f'"{author}" merged branch "{from_branch}" to "{to_branch}"'
-        
-        # Add commit message if available
+
         commit_message = action.get('message', '')
         if commit_message:
             base_message += f"\n {commit_message}"
-        
+
         return f"{base_message}\n{formatted_time}"
-    
+
     else:
         return f'"{author}" performed {action_type} action on {formatted_time}'
