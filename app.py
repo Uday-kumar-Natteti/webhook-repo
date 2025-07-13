@@ -2,23 +2,21 @@ from flask import Flask, request, jsonify, render_template
 from models import MongoDBHandler, format_action_message
 from datetime import datetime
 import json
+import pytz
 import os
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize MongoDB handler
 db_handler = MongoDBHandler()
 
 @app.route('/')
 def index():
-    """Serve the main UI page"""
     return render_template('index.html')
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook_receiver():
-    """GitHub webhook endpoint"""
     if request.method == 'GET':
         return "Webhook endpoint is working!"
     
@@ -34,9 +32,10 @@ def webhook_receiver():
         if event_type == 'push':
             action_data = process_push_event(payload)
         elif event_type == 'pull_request':
-            action_data = process_pull_request_event(payload)
-        elif event_type == 'pull_request' and payload.get('action') == 'closed' and payload.get('pull_request', {}).get('merged'):
-            action_data = process_merge_event(payload)
+            if payload.get('action') == 'closed' and payload.get('pull_request', {}).get('merged'):
+                action_data = process_merge_event(payload)
+            else:
+                action_data = process_pull_request_event(payload)
         
         if action_data:
             success = db_handler.insert_action(action_data)
@@ -52,7 +51,6 @@ def webhook_receiver():
         return jsonify({'error': 'Internal server error'}), 500
 
 def process_push_event(payload):
-    """Process push event payload with detailed file information"""
     try:
         commits = payload.get('commits', [])
         if not commits:
@@ -60,7 +58,6 @@ def process_push_event(payload):
             
         latest_commit = commits[-1]
         author = latest_commit.get('author', {}).get('name', 'Unknown')
-        
         ref = payload.get('ref', '')
         to_branch = ref.split('/')[-1] if '/' in ref else 'unknown'
         
@@ -78,7 +75,7 @@ def process_push_event(payload):
         return {
             'id': latest_commit.get('id', ''),
             'message': latest_commit.get('message', ''),
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': author,
             'to_branch': to_branch,
             'from_branch': None,
@@ -92,11 +89,9 @@ def process_push_event(payload):
         return None
 
 def process_pull_request_event(payload):
-    """Process pull request event payload"""
     try:
         pr = payload.get('pull_request', {})
         action = payload.get('action', '')
-        
         if action != 'opened':
             return None
             
@@ -107,7 +102,7 @@ def process_pull_request_event(payload):
         return {
             'id': str(pr.get('id', '')),
             'message': pr.get('title', ''),
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': author,
             'to_branch': to_branch,
             'from_branch': from_branch,
@@ -118,10 +113,8 @@ def process_pull_request_event(payload):
         return None
 
 def process_merge_event(payload):
-    """Process merge event payload"""
     try:
         pr = payload.get('pull_request', {})
-        
         if not pr.get('merged', False):
             return None
             
@@ -132,7 +125,7 @@ def process_merge_event(payload):
         return {
             'id': str(pr.get('id', '')),
             'message': pr.get('title', ''),
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': author,
             'to_branch': to_branch,
             'from_branch': from_branch,
@@ -144,19 +137,22 @@ def process_merge_event(payload):
 
 @app.route('/api/actions', methods=['GET'])
 def get_actions():
-    """API endpoint to get recent actions"""
     try:
         actions = db_handler.get_recent_actions()
         formatted_actions = []
-        
+
+        ist = pytz.timezone('Asia/Kolkata')
         for action in actions:
+            timestamp = action['timestamp']
+            if isinstance(timestamp, datetime):
+                timestamp = timestamp.astimezone(ist).isoformat()
             formatted_actions.append({
                 'id': action['_id'],
                 'message': format_action_message(action),
-                'timestamp': action['timestamp'].isoformat() if isinstance(action['timestamp'], datetime) else action['timestamp'],
+                'timestamp': timestamp,
                 'type': action['request_type']
             })
-        
+
         return jsonify(formatted_actions)
     except Exception as e:
         print(f"Error fetching actions: {e}")
@@ -164,7 +160,6 @@ def get_actions():
 
 @app.route('/test-webhook', methods=['GET', 'POST'])
 def test_webhook():
-    """Test endpoint for manual testing"""
     if request.method == 'GET':
         return "Test webhook endpoint is working!"
     
@@ -172,7 +167,7 @@ def test_webhook():
         test_data = {
             'id': 'test_123',
             'message': 'Test commit message',
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(pytz.timezone('Asia/Kolkata')),
             'author': 'Test User',
             'to_branch': 'main',
             'from_branch': None,
