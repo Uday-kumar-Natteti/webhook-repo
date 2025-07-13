@@ -2,9 +2,8 @@ class WebhookMonitor {
     constructor() {
         this.isConnected = false;
         this.lastUpdated = null;
-        this.updateInterval = 15000; // 15 seconds
+        this.updateInterval = 15000;
         this.intervalId = null;
-
         this.init();
     }
 
@@ -16,13 +15,13 @@ class WebhookMonitor {
 
     bindEvents() {
         const refreshBtn = document.getElementById('refresh-btn');
-        refreshBtn.addEventListener('click', () => this.fetchActions());
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.fetchActions());
+        }
     }
 
     startPolling() {
-        this.intervalId = setInterval(() => {
-            this.fetchActions();
-        }, this.updateInterval);
+        this.intervalId = setInterval(() => this.fetchActions(), this.updateInterval);
     }
 
     stopPolling() {
@@ -35,10 +34,7 @@ class WebhookMonitor {
     async fetchActions() {
         try {
             const response = await fetch('/api/actions');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
             const actions = await response.json();
             this.updateUI(actions);
             this.updateStatus(true);
@@ -52,7 +48,7 @@ class WebhookMonitor {
         const actionsList = document.getElementById('actions-list');
         const emptyState = document.getElementById('empty-state');
 
-        if (actions.length === 0) {
+        if (!actions || actions.length === 0) {
             actionsList.innerHTML = '<div class="loading">No activities yet</div>';
             emptyState.style.display = 'block';
             return;
@@ -67,9 +63,7 @@ class WebhookMonitor {
 
             return `
                 <div class="action-item">
-                    <div class="action-icon ${iconType}">
-                        ${iconText}
-                    </div>
+                    <div class="action-icon ${iconType}">${iconText}</div>
                     <div class="action-content">
                         <div class="action-message">${action.message}</div>
                         <div class="action-time">${timeAgo}</div>
@@ -83,34 +77,29 @@ class WebhookMonitor {
 
     getIconText(type) {
         switch (type.toLowerCase()) {
-            case 'push':
-                return '↑';
-            case 'pull_request':
-                return 'PR';
-            case 'merge':
-                return '⚡';
-            default:
-                return '•';
+            case 'push': return '↑';
+            case 'pull_request': return 'PR';
+            case 'merge': return '⚡';
+            default: return '•';
         }
     }
 
     formatTimeAgo(timestamp) {
-        const actionTime = new Date(timestamp); // Handles ISO 8601 string with timezone
+        const actionTime = new Date(timestamp); // parses ISO with timezone
         const now = new Date();
         const diffInSeconds = Math.floor((now - actionTime) / 1000);
 
-        if (diffInSeconds < 60) {
-            return 'Just now';
-        } else if (diffInSeconds < 3600) {
-            const minutes = Math.floor(diffInSeconds / 60);
-            return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-        } else if (diffInSeconds < 86400) {
-            const hours = Math.floor(diffInSeconds / 3600);
-            return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-        } else {
-            const days = Math.floor(diffInSeconds / 86400);
-            return `${days} day${days !== 1 ? 's' : ''} ago`;
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) {
+            const mins = Math.floor(diffInSeconds / 60);
+            return `${mins} minute${mins !== 1 ? 's' : ''} ago`;
         }
+        if (diffInSeconds < 86400) {
+            const hrs = Math.floor(diffInSeconds / 3600);
+            return `${hrs} hour${hrs !== 1 ? 's' : ''} ago`;
+        }
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
     }
 
     updateStatus(connected) {
@@ -121,12 +110,12 @@ class WebhookMonitor {
         this.isConnected = connected;
 
         if (connected) {
-            statusDot.classList.remove('disconnected');
+            statusDot?.classList.remove('disconnected');
             statusText.textContent = 'Connected';
             this.lastUpdated = new Date();
             lastUpdated.textContent = this.lastUpdated.toLocaleTimeString();
         } else {
-            statusDot.classList.add('disconnected');
+            statusDot?.classList.add('disconnected');
             statusText.textContent = 'Disconnected';
         }
     }
